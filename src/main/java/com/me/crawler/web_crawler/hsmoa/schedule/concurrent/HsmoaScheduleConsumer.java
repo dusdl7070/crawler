@@ -2,6 +2,8 @@ package com.me.crawler.web_crawler.hsmoa.schedule.concurrent;
 
 import com.me.crawler.common.concurrent.Consumer;
 import com.me.crawler.common.concurrent.Message;
+import com.me.crawler.common.manager.cache.DataCacheManager;
+import com.me.crawler.common.utils.BeanUtils;
 import com.me.crawler.common.utils.StringUtils;
 import com.me.crawler.web_crawler.hsmoa.vo.HsmoaDetail;
 import com.me.crawler.web_crawler.hsmoa.vo.HsmoaMain;
@@ -14,13 +16,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.ObjectUtils;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 public class HsmoaScheduleConsumer extends Consumer {
     private Logger logger = LoggerFactory.getLogger(getClass().getSimpleName());
     private String userAgent;
+    private DataCacheManager cache;
+
+    public static final String cachekey = "HsmoaScheduleData";
 
     public void setUserAgent(String userAgent) {
         this.userAgent = userAgent;
@@ -28,6 +32,8 @@ public class HsmoaScheduleConsumer extends Consumer {
 
     public HsmoaScheduleConsumer(BlockingQueue<Object> queue) {
         super(queue);
+
+        cache = (DataCacheManager) BeanUtils.getBean(DataCacheManager.class);
     }
 
     @Override
@@ -46,9 +52,16 @@ public class HsmoaScheduleConsumer extends Consumer {
 
                     Map<String, Object> result = validate(hsmoaMain.getHsmoaDetail());
                     if ((boolean) result.get("result")) {
-//                        logger.info("" + hsmoaMain.toString());
+
+                        List<HsmoaMain> list = new ArrayList<>();
+                        if(!ObjectUtils.isEmpty(cache.find(cachekey))) {
+                            list = (List<HsmoaMain>) cache.find(cachekey);
+                        }
+                        list.add(hsmoaMain);
+                        cache.update(cachekey, list);
+
                     } else {
-                        logger.info("Fail Cause : " + result.get("rstMsg").toString());
+                        logger.error("ERROR!!", "Fail Cause : " + result.get("rstMsg").toString());
                     }
 
                 } else if (obj instanceof Message) {
@@ -89,7 +102,7 @@ public class HsmoaScheduleConsumer extends Consumer {
         if (!ObjectUtils.isEmpty(div_display_table.select("div.table-cell > div.position-relative.border"))) {
             for (Element e : div_display_table.select("div.table-cell > div.position-relative.border").first().children()) {
                 if (!ObjectUtils.isEmpty(e.selectFirst("div#swipe_img > div > img"))) {
-                    hsmoaDetail.setDetailImage(e.select("div#swipe_img > div > img").attr("src"));
+                    hsmoaDetail.setImage(e.select("div#swipe_img > div > img").attr("src"));
                 }
             }
         }
@@ -117,6 +130,10 @@ public class HsmoaScheduleConsumer extends Consumer {
         if (!ObjectUtils.isEmpty(div_display_table.select("div#block_entityinfo > table > tbody > tr"))) {
             hsmoaDetail.setShopName(div_display_table.select("div#block_entityinfo > table > tbody > tr").first().select("td").last().text());
             hsmoaDetail.setRealTime(div_display_table.select("div#block_entityinfo > table > tbody > tr").last().select("td").last().text());
+        }
+
+        if (!ObjectUtils.isEmpty(doc.select("div.display-table-fixed > div.table-cell > div > div.margin-9 > img"))) {
+            hsmoaDetail.setDetailImage(doc.selectFirst("div.display-table-fixed > div.table-cell > div > div.margin-9 > img").attr("src"));
         }
 
         return hsmoaDetail;

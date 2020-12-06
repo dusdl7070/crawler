@@ -53,7 +53,7 @@ public class HsmoaScheduleProducer extends Producer {
                         .method(Connection.Method.GET)
                         .ignoreContentType(true);
 
-                Document doc = conn.get();
+                Document doc = conn.maxBodySize(0).get();
 
                 findTarget(doc);
 
@@ -73,7 +73,7 @@ public class HsmoaScheduleProducer extends Producer {
     }
 
     private void findTarget(Document doc) {
-        Elements div_timeline_groups = doc.select("div#after_live > div.timeline-group");
+        Elements div_timeline_groups = doc.select("div.timeline-group");
 
         for (Element div_timeline_group : div_timeline_groups) {
             String startTime = "";

@@ -1,6 +1,7 @@
 package com.me.crawler.web_crawler.hsmoa.vo;
 
 public class HsmoaDetail {
+    private String image;
     private String detailImage;
     private String shopMark;
     private String predTime;
@@ -10,6 +11,14 @@ public class HsmoaDetail {
     private String shopName;
     private String realTime;
     private String addInfo;
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
 
     public String getDetailImage() {
         return detailImage;

@@ -2,8 +2,11 @@ package com.me.crawler.web_crawler.hsmoa.schedule;
 
 import com.me.crawler.common.concurrent.Producer;
 import com.me.crawler.common.crawler.WebDataCrawler;
+import com.me.crawler.common.manager.cache.DataCacheManager;
 import com.me.crawler.web_crawler.hsmoa.schedule.concurrent.HsmoaScheduleProducer;
 import com.me.crawler.web_crawler.hsmoa.schedule.concurrent.HsmoaScheduleConsumer;
+import com.me.crawler.web_crawler.hsmoa.schedule.excel.HsmoaScheduleExcelWriter;
+import com.me.crawler.web_crawler.hsmoa.vo.HsmoaMain;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -11,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -31,9 +35,16 @@ public class HsmoaScheduleCrawler implements WebDataCrawler, InitializingBean, D
     private String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36";
 
     private String url = "https://hsmoa.com/?";
-    private String date = "";
+    public static String date = "";
     private List<String> sites = new ArrayList<>();
     private List<String> categories = new ArrayList<>();
+
+    DataCacheManager cache;
+
+    @Autowired
+    public HsmoaScheduleCrawler(DataCacheManager cacheManager) {
+        this.cache = cacheManager;
+    }
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -70,6 +81,16 @@ public class HsmoaScheduleCrawler implements WebDataCrawler, InitializingBean, D
             }
         } catch (InterruptedException ie) {
             logger.error("ERROR!", ie);
+
+        } finally {
+
+            HsmoaScheduleExcelWriter scheduleExcelWriter = new HsmoaScheduleExcelWriter();
+            scheduleExcelWriter.xlsxWrite();
+
+//            List<HsmoaMain> list = (List<HsmoaMain>) cache.find(HsmoaScheduleConsumer.cachekey);
+//            for (HsmoaMain hsmoaMain : list) {
+//                logger.info(hsmoaMain.toString());
+//            }
         }
 
     }
